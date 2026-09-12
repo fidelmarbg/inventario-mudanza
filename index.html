@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141a21">
+<title>Captura de inventario</title>
+<style>
+:root{
+  --ground:#141a21;
+  --surface:#1e2732;
+  --surface-2:#26313e;
+  --line:#33404f;
+  --ink:#e9eef3;
+  --muted:#8b9bab;
+  --signal:#e0a426;
+  --signal-ink:#241a02;
+  --sell:#4fa8a0;
+  --hold:#7d8a98;
+  --danger:#d1666a;
+  --r:10px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--ground);color:var(--ink)}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.45;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust:100%;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- barra de sesión ---------- */
+.bar{
+  position:sticky;top:0;z-index:20;
+  background:var(--surface);border-bottom:1px solid var(--line);
+  padding:10px 14px calc(10px + env(safe-area-inset-top)) 14px;
+  padding-top:calc(10px + env(safe-area-inset-top));
+}
+.bar-row{display:flex;align-items:center;gap:10px}
+.loc{
+  flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:var(--r);padding:9px 10px;
+}
+.bar-metrics{display:flex;gap:14px;text-align:right}
+.metric{line-height:1.1}
+.metric b{display:block;font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.metric span{font-size:11px;color:var(--muted)}
+.meter{height:4px;background:var(--surface-2);border-radius:3px;margin-top:9px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--signal);width:0}
+.meter.over i{background:var(--danger)}
+
+/* ---------- formulario ---------- */
+main{padding:14px}
+.shots{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.shot{position:relative;flex:0 0 auto;width:84px;height:84px;border-radius:var(--r);overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot button{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(10,14,18,.78);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.addshot{
+  flex:0 0 auto;width:84px;height:84px;border-radius:var(--r);
+  border:1px dashed var(--line);background:transparent;color:var(--muted);
+  font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;
+}
+.addshot em{font-style:normal;font-size:22px;color:var(--signal)}
+
+label.f{display:block;margin-top:16px}
+label.f>span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=number],textarea,select{
+  width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px;
+}
+textarea{min-height:70px;resize:vertical}
+input[type=number]{font-variant-numeric:tabular-nums}
+
+.row{display:flex;gap:10px;align-items:flex-end;margin-top:16px}
+.qty{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.qty button{width:46px;height:46px;border:0;background:var(--surface-2);font-size:21px;cursor:pointer}
+.qty input{width:58px;border:0;background:transparent;text-align:center;padding:12px 0;font-variant-numeric:tabular-nums}
+
+.chips{display:flex;gap:8px;margin-top:6px}
+.chip{
+  flex:1;padding:11px 4px;border:1px solid var(--line);background:var(--surface);
+  border-radius:var(--r);font-size:14px;cursor:pointer;
+}
+.chip[aria-pressed=true]{border-color:currentColor;font-weight:600}
+.chip.c-hold[aria-pressed=true]{color:var(--ink);background:var(--surface-2)}
+.chip.c-move[aria-pressed=true]{color:var(--signal);background:rgba(224,164,38,.12)}
+.chip.c-sell[aria-pressed=true]{color:var(--sell);background:rgba(79,168,160,.12)}
+
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);cursor:pointer}
+.toggle input{width:22px;height:22px;accent-color:var(--signal)}
+.sub{margin-top:10px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.sub label.f:first-child{margin-top:0}
+.sub input{background:var(--ground)}
+#serie{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+.hidden{display:none}
+
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.preset{padding:9px 12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:13px;cursor:pointer}
+.dims{display:flex;gap:8px;margin-top:10px}
+.dims label{flex:1}
+.vol{margin-top:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- zona del pulgar ---------- */
+.thumb{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:linear-gradient(to top,var(--ground) 62%,rgba(20,26,33,0));
+  padding:14px 14px calc(14px + env(safe-area-inset-bottom)) 14px;
+}
+.primary{
+  width:100%;padding:16px;border:0;border-radius:var(--r);
+  background:var(--signal);color:var(--signal-ink);font-size:17px;font-weight:650;cursor:pointer;
+}
+.primary:disabled{opacity:.4}
+.thumb-row{display:flex;justify-content:space-between;margin-top:9px}
+.link{background:none;border:0;color:var(--muted);font-size:13.5px;padding:6px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- lista ---------- */
+.sheet{position:fixed;inset:0;z-index:40;background:var(--ground);overflow-y:auto;padding:0 0 40px}
+.sheet-bar{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:12px}
+.sheet-bar h2{margin:0;font-size:16px;font-weight:600;flex:1}
+.sheet-body{padding:14px}
+.group-h{font-size:12.5px;color:var(--muted);margin:18px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.item{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.item img,.item .noimg{width:52px;height:52px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:var(--surface-2)}
+.item-b{flex:1;min-width:0}
+.item-b strong{display:block;font-weight:550;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-b small{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.tag{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.move{color:var(--signal);border-color:rgba(224,164,38,.45)}
+.tag.sell{color:var(--sell);border-color:rgba(79,168,160,.45)}
+.del{background:none;border:0;color:var(--danger);font-size:19px;padding:8px;cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:48px 20px;font-size:14.5px}
+.tools{display:grid;gap:9px;margin-top:26px}
+.tool{padding:13px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);text-align:left;cursor:pointer}
+.tool b{display:block;font-weight:600;font-size:14.5px}
+.tool span{color:var(--muted);font-size:12.5px}
+.toast{position:fixed;left:14px;right:14px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:50;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-row">
+    <select class="loc" id="loc" aria-label="Ubicación de la sesión"></select>
+    <div class="bar-metrics">
+      <div class="metric"><b id="mCount">0</b><span>objetos</span></div>
+      <div class="metric"><b id="mVol">0.00</b><span>m³</span></div>
+    </div>
+  </div>
+  <div class="meter" id="meter"><i id="meterFill"></i></div>
+</div>
+
+<main>
+  <div class="shots" id="shots">
+    <button class="addshot" id="addShot"><em>+</em>foto</button>
+    <button class="addshot" id="addLib"><em>+</em>galería</button>
+  </div>
+  <input type="file" accept="image/*" capture="environment" id="file" class="hidden">
+  <input type="file" accept="image/*" multiple id="lib" class="hidden">
+
+  <label class="f"><span>Qué es</span>
+    <input type="text" id="nombre" autocomplete="off" placeholder="Sillón de dos plazas">
+  </label>
+
+  <div class="row">
+    <div>
+      <span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px">Cantidad</span>
+      <div class="qty">
+        <button type="button" id="qMinus" aria-label="Menos">−</button>
+        <input type="number" id="cantidad" value="1" min="1" inputmode="numeric" aria-label="Cantidad">
+        <button type="button" id="qPlus" aria-label="Más">+</button>
+      </div>
+    </div>
+  </div>
+
+  <label class="f" style="margin-bottom:0"><span>Destino (opcional, se decide en la compu)</span></label>
+  <div class="chips" id="chips">
+    <button class="chip c-hold" data-d="pendiente" aria-pressed="true">Pendiente</button>
+    <button class="chip c-move" data-d="mudanza" aria-pressed="false">Se va</button>
+    <button class="chip c-sell" data-d="venta" aria-pressed="false">Vender</button>
+  </div>
+
+  <label class="toggle" for="esElec">
+    <span>Tiene motor, enchufe o batería</span>
+    <input type="checkbox" id="esElec">
+  </label>
+  <div class="sub hidden" id="elecBox">
+    <label class="f"><span>Marca</span><input type="text" id="marca" autocomplete="off"></label>
+    <label class="f"><span>Modelo</span><input type="text" id="modelo" autocomplete="off"></label>
+    <label class="f"><span>Número de serie</span><input type="text" id="serie" autocomplete="off" spellcheck="false"></label>
+    <p class="vol" style="margin-bottom:0">La aduana pide estos tres datos. Dispara una foto de la etiqueta.</p>
+  </div>
+
+  <label class="f" style="margin-bottom:0"><span>Volumen</span></label>
+  <div class="presets" id="presets">
+    <button class="preset" data-v="0.036">Caja chica</button>
+    <button class="preset" data-v="0.080">Caja mediana</button>
+    <button class="preset" data-v="0.150">Caja grande</button>
+    <button class="preset" data-v="manual">Medir</button>
+  </div>
+  <div class="dims hidden" id="dims">
+    <label class="f" style="margin-top:0"><span>Largo cm</span><input type="number" id="dL" inputmode="numeric"></label>
+    <label class="f" style="margin-top:0"><span>Ancho cm</span><input type="number" id="dA" inputmode="numeric"></label>
+    <label class="f" style="margin-top:0"><span>Alto cm</span><input type="number" id="dH" inputmode="numeric"></label>
+  </div>
+  <p class="vol" id="volOut">Sin volumen</p>
+
+  <label class="f"><span>Nota</span>
+    <textarea id="nota" placeholder="Rayón en la pata derecha. Lo compramos en 2019."></textarea>
+  </label>
+</main>
+
+<div class="thumb">
+  <button class="primary" id="save">Guardar y siguiente foto</button>
+  <div class="thumb-row">
+    <button class="link" id="saveOnly">Solo guardar</button>
+    <button class="link" id="openList">Ver inventario</button>
+  </div>
+</div>
+
+<div class="sheet hidden" id="sheet">
+  <div class="sheet-bar">
+    <h2 id="sheetTitle">Inventario</h2>
+    <button class="link" id="closeList">Cerrar</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<script>
+/* =========================================================
+   Almacén local (IndexedDB). La app es la fuente de verdad
+   en el dispositivo; el respaldo es manual y explícito.
+   ========================================================= */
+const DB_NAME='inv-mudanza', STORE='items';
+let db;
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains(STORE)){
+        d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
+      }
+    };
+    r.onsuccess=e=>res(e.target.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+function tx(mode){return db.transaction(STORE,mode).objectStore(STORE);}
+function put(v){return new Promise((res,rej)=>{const q=tx('readwrite').put(v);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+function all(){return new Promise((res,rej)=>{const q=tx('readonly').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+function del(id){return new Promise((res,rej)=>{const q=tx('readwrite').delete(id);q.onsuccess=()=>res();q.onerror=()=>rej(q.error);});}
+
+/* =========================================================
+   Estado de captura
+   ========================================================= */
+const UBICACIONES=['Sala','Comedor','Cocina','Recámara principal','Recámara 2','Estudio','Baño','Balcón','Lavadero','Bodega','Placares'];
+const LS_LOC='inv-loc', LS_CAP='inv-cap', LS_URL='inv-url', LS_KEY='inv-key';
+let shots=[];            // [{full:Blob, thumb:Blob, url:string}]
+let destino='pendiente';
+let volPreset=null;       // número (m³ por unidad) o null si es manual
+
+const $=id=>document.getElementById(id);
+
+/* ---------- imágenes: dos tamaños, siempre ---------- */
+function loadImage(file){
+  // Safari no aplica la orientación EXIF con createImageBitmap; un <img> sí.
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(url);res(img);};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('decode'));};
+    img.src=url;
+  });
+}
+async function processImage(file){
+  const img=await loadImage(file);
+  const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+  const mk=max=>{
+    const s=Math.min(1,max/Math.max(iw,ih));
+    const c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(iw*s)); c.height=Math.max(1,Math.round(ih*s));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    return new Promise(r=>c.toBlob(r,'image/jpeg',0.72));
+  };
+  const full=await mk(1400);   // para consultar el detalle
+  const thumb=await mk(600);   // para el catálogo y los PDF
+  return {full,thumb};
+}
+
+function renderShots(){
+  const box=$('shots');
+  box.querySelectorAll('.shot').forEach(n=>n.remove());
+  shots.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='shot';
+    d.innerHTML='<img alt="">'+'<button type="button" aria-label="Quitar foto">×</button>';
+    d.querySelector('img').src=s.url;
+    d.querySelector('button').onclick=()=>{URL.revokeObjectURL(s.url);shots.splice(i,1);renderShots();};
+    box.insertBefore(d,$('addShot'));
+  });
+}
+
+$('addShot').onclick=()=>$('file').click();
+$('addLib').onclick=()=>$('lib').click();
+
+async function ingest(e){
+  const files=[...e.target.files];
+  e.target.value='';
+  for(const f of files){
+    try{
+      const {full,thumb}=await processImage(f);
+      shots.push({full,thumb,url:URL.createObjectURL(thumb)});
+    }catch(err){ toast('Esa imagen no se pudo procesar.'); }
+  }
+  renderShots();
+}
+$('file').onchange=ingest;
+$('lib').onchange=ingest;
+
+/* ---------- cantidad ---------- */
+$('qMinus').onclick=()=>{const i=$('cantidad');i.value=Math.max(1,(+i.value||1)-1);updateVol();};
+$('qPlus').onclick=()=>{const i=$('cantidad');i.value=(+i.value||1)+1;updateVol();};
+$('cantidad').oninput=updateVol;
+
+/* ---------- destino ---------- */
+$('chips').onclick=e=>{
+  const b=e.target.closest('.chip'); if(!b) return;
+  destino=b.dataset.d;
+  [...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',String(c===b)));
+};
+
+/* ---------- eléctrico ---------- */
+$('esElec').onchange=e=>$('elecBox').classList.toggle('hidden',!e.target.checked);
+
+/* ---------- volumen ---------- */
+$('presets').onclick=e=>{
+  const b=e.target.closest('.preset'); if(!b) return;
+  if(b.dataset.v==='manual'){
+    volPreset=null; $('dims').classList.remove('hidden'); $('dL').focus();
+  }else{
+    volPreset=parseFloat(b.dataset.v);
+    $('dims').classList.add('hidden');
+    $('dL').value=$('dA').value=$('dH').value='';
+  }
+  markPreset(b);
+  updateVol();
+};
+function markPreset(active){
+  [...$('presets').children].forEach(p=>{
+    const on=p===active;
+    p.style.borderColor=on?'var(--signal)':'var(--line)';
+    p.style.color=on?'var(--signal)':'var(--ink)';
+  });
+}
+['dL','dA','dH'].forEach(id=>$(id).oninput=updateVol);
+
+function unitVol(){
+  if(volPreset!=null) return volPreset;
+  const l=+$('dL').value, a=+$('dA').value, h=+$('dH').value;
+  if(l>0&&a>0&&h>0) return (l*a*h)/1e6;
+  return 0;
+}
+function updateVol(){
+  const u=unitVol(), q=Math.max(1,+$('cantidad').value||1);
+  $('volOut').textContent = u>0
+    ? `${(u*q).toFixed(3)} m³ en total (${u.toFixed(3)} por unidad)`
+    : 'Sin volumen';
+}
+
+/* ---------- ubicación y contadores ---------- */
+function initLoc(){
+  const sel=$('loc');
+  UBICACIONES.forEach(u=>{
+    const o=document.createElement('option'); o.value=u; o.textContent=u; sel.appendChild(o);
+  });
+  sel.value=localStorage.getItem(LS_LOC)||UBICACIONES[0];
+  sel.onchange=()=>localStorage.setItem(LS_LOC,sel.value);
+}
+async function refreshMetrics(){
+  const items=await all();
+  const objetos=items.reduce((s,i)=>s+(i.cantidad||1),0);
+  const vol=items.reduce((s,i)=>s+(i.m3||0),0);
+  $('mCount').textContent=objetos;
+  $('mVol').textContent=vol.toFixed(2);
+  const cap=parseFloat(localStorage.getItem(LS_CAP)||'0');
+  const meter=$('meter');
+  if(cap>0){
+    const pct=Math.min(100,vol/cap*100);
+    $('meterFill').style.width=pct+'%';
+    meter.classList.toggle('over',vol>cap);
+  }else{
+    $('meterFill').style.width='0%';
+  }
+  return items;
+}
+
+/* ---------- guardar ---------- */
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2200);
+}
+
+function collect(){
+  const nombre=$('nombre').value.trim();
+  if(!nombre){ $('nombre').focus(); toast('Ponle nombre antes de guardar.'); return null; }
+  const q=Math.max(1,+$('cantidad').value||1);
+  const u=unitVol();
+  return {
+    nombre, cantidad:q, destino,
+    ubicacion:$('loc').value,
+    electrico:$('esElec').checked,
+    marca:$('marca').value.trim(), modelo:$('modelo').value.trim(), serie:$('serie').value.trim(),
+    dims:{l:+$('dL').value||null,a:+$('dA').value||null,h:+$('dH').value||null},
+    m3Unidad:u||null, m3:u?+(u*q).toFixed(4):null,
+    nota:$('nota').value.trim(),
+    categoria:null, valorUSD:null, precioPedido:null, precioMinimo:null,
+    bulto:null, estado:'capturado', sincronizado:false,
+    creado:new Date().toISOString(),
+    fotos:shots.map(s=>({full:s.full,thumb:s.thumb}))
+  };
+}
+
+async function persist(rec){
+  try{ await put(rec); await refreshMetrics(); return true; }
+  catch(err){ toast('No se pudo guardar en este dispositivo.'); return false; }
+}
+
+function resetForm(){
+  shots.forEach(s=>URL.revokeObjectURL(s.url));
+  shots=[]; renderShots();
+  $('nombre').value=''; $('cantidad').value=1; $('nota').value='';
+  $('esElec').checked=false; $('elecBox').classList.add('hidden');
+  $('marca').value=$('modelo').value=$('serie').value='';
+  $('dL').value=$('dA').value=$('dH').value='';
+  $('dims').classList.add('hidden'); volPreset=null; markPreset(null); updateVol();
+  destino='pendiente';
+  [...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.d==='pendiente')));
+}
+
+// Safari descarta un .click() en un input de archivo si ya se rompió la cadena
+// del gesto. Por eso: armar, limpiar y abrir la cámara de forma sincrónica,
+// y escribir en el almacén después.
+$('save').onclick=()=>{
+  const rec=collect();
+  if(!rec) return;
+  resetForm();
+  $('file').click();
+  persist(rec);
+};
+$('saveOnly').onclick=()=>{
+  const rec=collect();
+  if(!rec) return;
+  resetForm();
+  persist(rec).then(ok=>{ if(ok){ toast('Guardado.'); $('nombre').focus(); } });
+};
+
+/* =========================================================
+   Inventario, respaldo y traspaso a la computadora
+   ========================================================= */
+$('openList').onclick=openList;
+$('closeList').onclick=()=>$('sheet').classList.add('hidden');
+
+async function openList(){
+  const items=await refreshMetrics();
+  const body=$('sheetBody');
+  $('sheetTitle').textContent=`Inventario · ${items.length} fichas`;
+  body.innerHTML='';
+
+  if(!items.length){
+    body.innerHTML='<p class="empty">Todavía no hay nada capturado. Elige un cuarto y empieza a disparar fotos.</p>';
+  }else{
+    const groups={};
+    items.forEach(i=>{(groups[i.ubicacion]=groups[i.ubicacion]||[]).push(i);});
+    Object.keys(groups).sort().forEach(g=>{
+      const vol=groups[g].reduce((s,i)=>s+(i.m3||0),0);
+      const h=document.createElement('div');
+      h.className='group-h';
+      h.textContent=`${g} · ${groups[g].length} fichas · ${vol.toFixed(2)} m³`;
+      body.appendChild(h);
+      groups[g].slice().reverse().forEach(i=>body.appendChild(itemRow(i)));
+    });
+  }
+
+  const pend=items.filter(i=>!i.sincronizado).length;
+  const tools=document.createElement('div');
+  tools.className='tools';
+  tools.appendChild(tool('Enviar a Google Sheets',
+    localStorage.getItem(LS_URL)
+      ? (pend?`${pend} fichas sin enviar.`:'Todo enviado.')
+      : 'Falta pegar la URL del Apps Script.',
+    syncSheets));
+  tools.appendChild(tool('Configurar destino','URL del Apps Script y clave compartida.',setEndpoint));
+  tools.appendChild(tool('Exportar respaldo completo','JSON con fotos incluidas. Este es el archivo que abres en la computadora.',exportFull));
+  tools.appendChild(tool('Exportar tabla CSV','Solo los datos, sin fotos. Para revisar rápido en Excel.',exportCSV));
+  tools.appendChild(tool('Restaurar desde respaldo','Vuelca un JSON exportado antes. Se suma a lo que ya existe.',importFull));
+  tools.appendChild(tool('Fijar tope de volumen',`Cupo que autorice AAK, en m³. Ahora: ${localStorage.getItem(LS_CAP)||'sin fijar'}`,setCap));
+  body.appendChild(tools);
+
+  $('sheet').classList.remove('hidden');
+  $('sheet').scrollTop=0;
+}
+
+function tool(t,s,fn){
+  const b=document.createElement('button');
+  b.className='tool'; b.innerHTML='<b></b><span></span>';
+  b.querySelector('b').textContent=t; b.querySelector('span').textContent=s;
+  b.onclick=fn; return b;
+}
+
+function itemRow(i){
+  const row=document.createElement('div'); row.className='item';
+  if(i.fotos&&i.fotos.length){
+    const img=document.createElement('img'); img.alt='';
+    img.src=URL.createObjectURL(i.fotos[0].thumb); row.appendChild(img);
+  }else{
+    const d=document.createElement('div'); d.className='noimg'; row.appendChild(d);
+  }
+  const b=document.createElement('div'); b.className='item-b';
+  const st=document.createElement('strong');
+  st.textContent=(i.cantidad>1?i.cantidad+'× ':'')+i.nombre;
+  const sm=document.createElement('small');
+  const bits=[];
+  if(i.m3) bits.push(i.m3.toFixed(3)+' m³');
+  if(i.electrico&&i.serie) bits.push('serie '+i.serie);
+  else if(i.electrico) bits.push('falta serie');
+  sm.textContent=bits.join(' · ')||'sin volumen';
+  b.appendChild(st); b.appendChild(sm); row.appendChild(b);
+
+  const tag=document.createElement('span');
+  tag.className='tag'+(i.destino==='mudanza'?' move':i.destino==='venta'?' sell':'');
+  tag.textContent=i.destino==='mudanza'?'se va':i.destino==='venta'?'vender':'pendiente';
+  row.appendChild(tag);
+
+  const x=document.createElement('button');
+  x.className='del'; x.textContent='×'; x.setAttribute('aria-label','Borrar ficha');
+  x.onclick=async()=>{ if(confirm(`¿Borrar "${i.nombre}"?`)){ await del(i.id); openList(); } };
+  row.appendChild(x);
+  return row;
+}
+
+function blobToB64(b){
+  return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b);});
+}
+function download(name,blob){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+async function exportFull(){
+  const items=await all();
+  if(!items.length){ toast('No hay nada que exportar.'); return; }
+  toast('Armando el respaldo, aguanta.');
+  const out=[];
+  for(const i of items){
+    const fotos=[];
+    for(const f of (i.fotos||[])){
+      fotos.push({full:await blobToB64(f.full),thumb:await blobToB64(f.thumb)});
+    }
+    out.push({...i,fotos});
+  }
+  const stamp=new Date().toISOString().slice(0,10);
+  download(`inventario-mudanza-${stamp}.json`,
+    new Blob([JSON.stringify({version:1,exportado:new Date().toISOString(),items:out},null,1)],{type:'application/json'}));
+}
+
+async function exportCSV(){
+  const items=await all();
+  if(!items.length){ toast('No hay nada que exportar.'); return; }
+  const cols=['id','ubicacion','nombre','cantidad','destino','m3Unidad','m3','electrico','marca','modelo','serie','nota','creado'];
+  const esc=v=>{ v=(v==null?'':String(v)); return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const rows=[cols.join(',')].concat(items.map(i=>cols.map(c=>esc(i[c])).join(',')));
+  download(`inventario-${new Date().toISOString().slice(0,10)}.csv`,
+    new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'}));
+}
+
+function importFull(){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='application/json';
+  inp.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const data=JSON.parse(await f.text());
+      const items=data.items||[];
+      for(const i of items){
+        const fotos=[];
+        for(const p of (i.fotos||[])){
+          fotos.push({full:await (await fetch(p.full)).blob(),thumb:await (await fetch(p.thumb)).blob()});
+        }
+        const {id,...rest}=i;
+        await put({...rest,fotos});
+      }
+      toast(`Se restauraron ${items.length} fichas.`);
+      openList();
+    }catch(err){ toast('Ese archivo no se pudo leer.'); }
+  };
+  inp.click();
+}
+
+/* ---------- sincronización con Google Sheets ---------- */
+function setEndpoint(){
+  const u=prompt('URL del Apps Script (termina en /exec):',localStorage.getItem(LS_URL)||'');
+  if(u===null) return;
+  localStorage.setItem(LS_URL,u.trim());
+  const k=prompt('Clave compartida (la misma del script):',localStorage.getItem(LS_KEY)||'');
+  if(k!==null) localStorage.setItem(LS_KEY,k.trim());
+  openList();
+}
+
+async function syncSheets(){
+  const url=localStorage.getItem(LS_URL);
+  if(!url){ toast('Primero configura el destino.'); return; }
+  const key=localStorage.getItem(LS_KEY)||'';
+  const items=(await all()).filter(i=>!i.sincronizado);
+  if(!items.length){ toast('No hay nada pendiente.'); return; }
+
+  let ok=0, fail=0;
+  for(const i of items){
+    try{
+      const fotos=[];
+      for(const f of (i.fotos||[])){
+        fotos.push({thumb:await blobToB64(f.thumb),full:await blobToB64(f.full)});
+      }
+      const {fotos:_,...meta}=i;
+      // text/plain evita el preflight OPTIONS, que Apps Script no contesta.
+      const r=await fetch(url,{
+        method:'POST', mode:'cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({key,item:meta,fotos})
+      });
+      const res=await r.json();
+      if(!res||res.ok!==true) throw new Error(res&&res.error||'rechazado');
+      await put({...i,sincronizado:true,driveIds:res.driveIds||null});
+      ok++;
+      toast(`Enviando ${ok} de ${items.length}.`);
+    }catch(err){ fail++; }
+  }
+  toast(fail?`${ok} enviadas, ${fail} fallaron. Vuelve a intentar.`:`${ok} fichas enviadas.`);
+  openList();
+}
+
+function setCap(){
+  const v=prompt('Tope de volumen en m³ (deja vacío para quitarlo):',localStorage.getItem(LS_CAP)||'');
+  if(v===null) return;
+  if(v.trim()==='') localStorage.removeItem(LS_CAP);
+  else localStorage.setItem(LS_CAP,String(parseFloat(v)||0));
+  refreshMetrics(); openList();
+}
+
+/* ---------- arranque ---------- */
+(async()=>{
+  initLoc();
+  try{
+    db=await openDB();
+    if(navigator.storage&&navigator.storage.persist) navigator.storage.persist();
+    await refreshMetrics();
+  }catch(err){
+    toast('Este navegador no permitió abrir el almacén local.');
+  }
+  updateVol();
+})();
+</script>
+</body>
+</html>
