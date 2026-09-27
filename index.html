@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#141a21">
-<title>Captura de inventario</title>
+<title>Inventario de mudanza</title>
 <style>
 :root{
   --ground:#141a21;
@@ -16,7 +16,7 @@
   --signal:#e0a426;
   --signal-ink:#241a02;
   --sell:#4fa8a0;
-  --hold:#7d8a98;
+  --gift:#9b8ec4;
   --danger:#d1666a;
   --r:10px;
 }
@@ -32,92 +32,61 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ---------- barra de sesión ---------- */
 .bar{
   position:sticky;top:0;z-index:20;
   background:var(--surface);border-bottom:1px solid var(--line);
-  padding:10px 14px calc(10px + env(safe-area-inset-top)) 14px;
-  padding-top:calc(10px + env(safe-area-inset-top));
+  padding:10px 14px 11px 14px;padding-top:calc(10px + env(safe-area-inset-top));
 }
 .bar-row{display:flex;align-items:center;gap:10px}
-.loc{
-  flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);
-  border-radius:var(--r);padding:9px 10px;
-}
+.loc{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:9px 10px}
 .bar-metrics{display:flex;gap:14px;text-align:right}
 .metric{line-height:1.1}
 .metric b{display:block;font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .metric span{font-size:11px;color:var(--muted)}
-.meter{height:4px;background:var(--surface-2);border-radius:3px;margin-top:9px;overflow:hidden}
-.meter i{display:block;height:100%;background:var(--signal);width:0}
-.meter.over i{background:var(--danger)}
 
-/* ---------- formulario ---------- */
 main{padding:14px}
 .shots{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
 .shot{position:relative;flex:0 0 auto;width:84px;height:84px;border-radius:var(--r);overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
 .shot img{width:100%;height:100%;object-fit:cover;display:block}
 .shot button{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(10,14,18,.78);color:#fff;font-size:15px;line-height:1;cursor:pointer}
-.addshot{
-  flex:0 0 auto;width:84px;height:84px;border-radius:var(--r);
-  border:1px dashed var(--line);background:transparent;color:var(--muted);
-  font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;
-}
+.addshot{flex:0 0 auto;width:84px;height:84px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
 .addshot em{font-style:normal;font-size:22px;color:var(--signal)}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
 
 label.f{display:block;margin-top:16px}
 label.f>span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
-input[type=text],input[type=number],textarea,select{
-  width:100%;background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--r);padding:12px;
-}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 textarea{min-height:70px;resize:vertical}
 input[type=number]{font-variant-numeric:tabular-nums}
 
 .row{display:flex;gap:10px;align-items:flex-end;margin-top:16px}
-.qty{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.row>div{flex:1}
+.lbl{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface);width:max-content}
 .qty button{width:46px;height:46px;border:0;background:var(--surface-2);font-size:21px;cursor:pointer}
 .qty input{width:58px;border:0;background:transparent;text-align:center;padding:12px 0;font-variant-numeric:tabular-nums}
 
 .chips{display:flex;gap:8px;margin-top:6px}
-.chip{
-  flex:1;padding:11px 4px;border:1px solid var(--line);background:var(--surface);
-  border-radius:var(--r);font-size:14px;cursor:pointer;
-}
+.chip{flex:1;padding:11px 4px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);font-size:14px;cursor:pointer}
 .chip[aria-pressed=true]{border-color:currentColor;font-weight:600}
-.chip.c-hold[aria-pressed=true]{color:var(--ink);background:var(--surface-2)}
 .chip.c-move[aria-pressed=true]{color:var(--signal);background:rgba(224,164,38,.12)}
 .chip.c-sell[aria-pressed=true]{color:var(--sell);background:rgba(79,168,160,.12)}
+.chip.c-gift[aria-pressed=true]{color:var(--gift);background:rgba(155,142,196,.14)}
 
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);cursor:pointer}
-.toggle input{width:22px;height:22px;accent-color:var(--signal)}
+.toggle input{width:22px;height:22px;accent-color:var(--signal);flex:0 0 auto}
 .sub{margin-top:10px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 .sub label.f:first-child{margin-top:0}
-.sub input{background:var(--ground)}
+.sub input[type=text]{background:var(--ground)}
+.sub .toggle{background:var(--ground);margin-top:14px}
 #serie{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
 .hidden{display:none}
 
-.presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.preset{padding:9px 12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:13px;cursor:pointer}
-.dims{display:flex;gap:8px;margin-top:10px}
-.dims label{flex:1}
-.vol{margin-top:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-
-/* ---------- zona del pulgar ---------- */
-.thumb{
-  position:fixed;left:0;right:0;bottom:0;z-index:30;
-  background:linear-gradient(to top,var(--ground) 62%,rgba(20,26,33,0));
-  padding:14px 14px calc(14px + env(safe-area-inset-bottom)) 14px;
-}
-.primary{
-  width:100%;padding:16px;border:0;border-radius:var(--r);
-  background:var(--signal);color:var(--signal-ink);font-size:17px;font-weight:650;cursor:pointer;
-}
-.primary:disabled{opacity:.4}
+.thumb{position:fixed;left:0;right:0;bottom:0;z-index:30;background:linear-gradient(to top,var(--ground) 62%,rgba(20,26,33,0));padding:14px 14px calc(14px + env(safe-area-inset-bottom)) 14px}
+.primary{width:100%;padding:16px;border:0;border-radius:var(--r);background:var(--signal);color:var(--signal-ink);font-size:17px;font-weight:650;cursor:pointer}
 .thumb-row{display:flex;justify-content:space-between;margin-top:9px}
 .link{background:none;border:0;color:var(--muted);font-size:13.5px;padding:6px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
-/* ---------- lista ---------- */
 .sheet{position:fixed;inset:0;z-index:40;background:var(--ground);overflow-y:auto;padding:0 0 40px}
 .sheet-bar{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:12px}
 .sheet-bar h2{margin:0;font-size:16px;font-weight:600;flex:1}
@@ -131,6 +100,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .tag{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .tag.move{color:var(--signal);border-color:rgba(224,164,38,.45)}
 .tag.sell{color:var(--sell);border-color:rgba(79,168,160,.45)}
+.tag.gift{color:var(--gift);border-color:rgba(155,142,196,.45)}
 .del{background:none;border:0;color:var(--danger);font-size:19px;padding:8px;cursor:pointer}
 .empty{color:var(--muted);text-align:center;padding:48px 20px;font-size:14.5px}
 .tools{display:grid;gap:9px;margin-top:26px}
@@ -147,10 +117,9 @@ input[type=number]{font-variant-numeric:tabular-nums}
     <select class="loc" id="loc" aria-label="Ubicación de la sesión"></select>
     <div class="bar-metrics">
       <div class="metric"><b id="mCount">0</b><span>objetos</span></div>
-      <div class="metric"><b id="mVol">0.00</b><span>m³</span></div>
+      <div class="metric"><b id="mVal">0</b><span>USD</span></div>
     </div>
   </div>
-  <div class="meter" id="meter"><i id="meterFill"></i></div>
 </div>
 
 <main>
@@ -160,56 +129,55 @@ input[type=number]{font-variant-numeric:tabular-nums}
   </div>
   <input type="file" accept="image/*" capture="environment" id="file" class="hidden">
   <input type="file" accept="image/*" multiple id="lib" class="hidden">
+  <p class="hint">Varias tomas de lo caro. La foto es tu evidencia si algo llega dañado.</p>
 
   <label class="f"><span>Qué es</span>
     <input type="text" id="nombre" autocomplete="off" placeholder="Sillón de dos plazas">
   </label>
 
   <div class="row">
-    <div>
-      <span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px">Cantidad</span>
+    <div style="flex:0 0 auto">
+      <span class="lbl">Cantidad</span>
       <div class="qty">
         <button type="button" id="qMinus" aria-label="Menos">−</button>
         <input type="number" id="cantidad" value="1" min="1" inputmode="numeric" aria-label="Cantidad">
         <button type="button" id="qPlus" aria-label="Más">+</button>
       </div>
     </div>
+    <div>
+      <span class="lbl">Valor estimado USD</span>
+      <input type="number" id="valor" inputmode="decimal" min="0" placeholder="0">
+    </div>
   </div>
 
-  <label class="f" style="margin-bottom:0"><span>Destino (opcional, se decide en la compu)</span></label>
+  <label class="f" style="margin-bottom:0"><span>Destino</span></label>
   <div class="chips" id="chips">
-    <button class="chip c-hold" data-d="pendiente" aria-pressed="true">Pendiente</button>
-    <button class="chip c-move" data-d="mudanza" aria-pressed="false">Se va</button>
+    <button class="chip c-move" data-d="mudanza" aria-pressed="true">Se va</button>
     <button class="chip c-sell" data-d="venta" aria-pressed="false">Vender</button>
+    <button class="chip c-gift" data-d="regalo" aria-pressed="false">Regalar</button>
   </div>
 
-  <label class="toggle" for="esElec">
-    <span>Tiene motor, enchufe o batería</span>
-    <input type="checkbox" id="esElec">
+  <label class="f hidden" id="ventaBox"><span>Precio de venta USD</span>
+    <input type="number" id="precio" inputmode="decimal" min="0" placeholder="0">
   </label>
-  <div class="sub hidden" id="elecBox">
+
+  <label class="toggle" for="tieneMarca">
+    <span>Agregar marca, modelo o serie</span>
+    <input type="checkbox" id="tieneMarca">
+  </label>
+  <div class="sub hidden" id="marcaBox">
     <label class="f"><span>Marca</span><input type="text" id="marca" autocomplete="off"></label>
     <label class="f"><span>Modelo</span><input type="text" id="modelo" autocomplete="off"></label>
     <label class="f"><span>Número de serie</span><input type="text" id="serie" autocomplete="off" spellcheck="false"></label>
-    <p class="vol" style="margin-bottom:0">La aduana pide estos tres datos. Dispara una foto de la etiqueta.</p>
+    <label class="toggle" for="esElec">
+      <span>Tiene motor, enchufe o batería</span>
+      <input type="checkbox" id="esElec">
+    </label>
+    <p class="hint">Si es eléctrico, la aduana pide marca, modelo y serie. Dispara una foto de la etiqueta.</p>
   </div>
-
-  <label class="f" style="margin-bottom:0"><span>Volumen</span></label>
-  <div class="presets" id="presets">
-    <button class="preset" data-v="0.036">Caja chica</button>
-    <button class="preset" data-v="0.080">Caja mediana</button>
-    <button class="preset" data-v="0.150">Caja grande</button>
-    <button class="preset" data-v="manual">Medir</button>
-  </div>
-  <div class="dims hidden" id="dims">
-    <label class="f" style="margin-top:0"><span>Largo cm</span><input type="number" id="dL" inputmode="numeric"></label>
-    <label class="f" style="margin-top:0"><span>Ancho cm</span><input type="number" id="dA" inputmode="numeric"></label>
-    <label class="f" style="margin-top:0"><span>Alto cm</span><input type="number" id="dH" inputmode="numeric"></label>
-  </div>
-  <p class="vol" id="volOut">Sin volumen</p>
 
   <label class="f"><span>Nota</span>
-    <textarea id="nota" placeholder="Rayón en la pata derecha. Lo compramos en 2019."></textarea>
+    <textarea id="nota" placeholder="Rayón en la pata derecha. Comprado en 2019."></textarea>
   </label>
 </main>
 
@@ -231,8 +199,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <script>
 /* =========================================================
-   Almacén local (IndexedDB). La app es la fuente de verdad
-   en el dispositivo; el respaldo es manual y explícito.
+   Almacén local. El dispositivo es la fuente de verdad
+   durante la captura; la hoja es la copia de trabajo.
    ========================================================= */
 const DB_NAME='inv-mudanza', STORE='items';
 let db;
@@ -242,9 +210,7 @@ function openDB(){
     const r=indexedDB.open(DB_NAME,1);
     r.onupgradeneeded=e=>{
       const d=e.target.result;
-      if(!d.objectStoreNames.contains(STORE)){
-        d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
-      }
+      if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
     };
     r.onsuccess=e=>res(e.target.result);
     r.onerror=()=>rej(r.error);
@@ -255,18 +221,15 @@ function put(v){return new Promise((res,rej)=>{const q=tx('readwrite').put(v);q.
 function all(){return new Promise((res,rej)=>{const q=tx('readonly').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
 function del(id){return new Promise((res,rej)=>{const q=tx('readwrite').delete(id);q.onsuccess=()=>res();q.onerror=()=>rej(q.error);});}
 
-/* =========================================================
-   Estado de captura
-   ========================================================= */
-const UBICACIONES=['Sala','Comedor','Cocina','Recámara principal','Recámara 2','Estudio','Baño','Balcón','Lavadero','Bodega','Placares'];
-const LS_LOC='inv-loc', LS_CAP='inv-cap', LS_URL='inv-url', LS_KEY='inv-key';
-let shots=[];            // [{full:Blob, thumb:Blob, url:string}]
-let destino='pendiente';
-let volPreset=null;       // número (m³ por unidad) o null si es manual
+/* ---------- estado ---------- */
+const UBICACIONES=['Sala','Comedor','Cocina','Recámara principal','Recámara 2','Estudio','Baño','Balcón','Lavadero','Bodega','Placares','Otro'];
+const LS_LOC='inv-loc', LS_URL='inv-url', LS_KEY='inv-key';
+let shots=[];
+let destino='mudanza';
 
 const $=id=>document.getElementById(id);
 
-/* ---------- imágenes: dos tamaños, siempre ---------- */
+/* ---------- imágenes ---------- */
 function loadImage(file){
   // Safari no aplica la orientación EXIF con createImageBitmap; un <img> sí.
   return new Promise((res,rej)=>{
@@ -287,9 +250,7 @@ async function processImage(file){
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     return new Promise(r=>c.toBlob(r,'image/jpeg',0.72));
   };
-  const full=await mk(1400);   // para consultar el detalle
-  const thumb=await mk(600);   // para el catálogo y los PDF
-  return {full,thumb};
+  return {full:await mk(1400), thumb:await mk(600)};
 }
 
 function renderShots(){
@@ -298,7 +259,7 @@ function renderShots(){
   shots.forEach((s,i)=>{
     const d=document.createElement('div');
     d.className='shot';
-    d.innerHTML='<img alt="">'+'<button type="button" aria-label="Quitar foto">×</button>';
+    d.innerHTML='<img alt=""><button type="button" aria-label="Quitar foto">×</button>';
     d.querySelector('img').src=s.url;
     d.querySelector('button').onclick=()=>{URL.revokeObjectURL(s.url);shots.splice(i,1);renderShots();};
     box.insertBefore(d,$('addShot'));
@@ -307,7 +268,6 @@ function renderShots(){
 
 $('addShot').onclick=()=>$('file').click();
 $('addLib').onclick=()=>$('lib').click();
-
 async function ingest(e){
   const files=[...e.target.files];
   e.target.value='';
@@ -322,145 +282,86 @@ async function ingest(e){
 $('file').onchange=ingest;
 $('lib').onchange=ingest;
 
-/* ---------- cantidad ---------- */
-$('qMinus').onclick=()=>{const i=$('cantidad');i.value=Math.max(1,(+i.value||1)-1);updateVol();};
-$('qPlus').onclick=()=>{const i=$('cantidad');i.value=(+i.value||1)+1;updateVol();};
-$('cantidad').oninput=updateVol;
+/* ---------- campos ---------- */
+$('qMinus').onclick=()=>{const i=$('cantidad');i.value=Math.max(1,(+i.value||1)-1);};
+$('qPlus').onclick=()=>{const i=$('cantidad');i.value=(+i.value||1)+1;};
 
-/* ---------- destino ---------- */
 $('chips').onclick=e=>{
   const b=e.target.closest('.chip'); if(!b) return;
   destino=b.dataset.d;
   [...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',String(c===b)));
+  $('ventaBox').classList.toggle('hidden',destino!=='venta');
 };
+$('tieneMarca').onchange=e=>$('marcaBox').classList.toggle('hidden',!e.target.checked);
 
-/* ---------- eléctrico ---------- */
-$('esElec').onchange=e=>$('elecBox').classList.toggle('hidden',!e.target.checked);
-
-/* ---------- volumen ---------- */
-$('presets').onclick=e=>{
-  const b=e.target.closest('.preset'); if(!b) return;
-  if(b.dataset.v==='manual'){
-    volPreset=null; $('dims').classList.remove('hidden'); $('dL').focus();
-  }else{
-    volPreset=parseFloat(b.dataset.v);
-    $('dims').classList.add('hidden');
-    $('dL').value=$('dA').value=$('dH').value='';
-  }
-  markPreset(b);
-  updateVol();
-};
-function markPreset(active){
-  [...$('presets').children].forEach(p=>{
-    const on=p===active;
-    p.style.borderColor=on?'var(--signal)':'var(--line)';
-    p.style.color=on?'var(--signal)':'var(--ink)';
-  });
-}
-['dL','dA','dH'].forEach(id=>$(id).oninput=updateVol);
-
-function unitVol(){
-  if(volPreset!=null) return volPreset;
-  const l=+$('dL').value, a=+$('dA').value, h=+$('dH').value;
-  if(l>0&&a>0&&h>0) return (l*a*h)/1e6;
-  return 0;
-}
-function updateVol(){
-  const u=unitVol(), q=Math.max(1,+$('cantidad').value||1);
-  $('volOut').textContent = u>0
-    ? `${(u*q).toFixed(3)} m³ en total (${u.toFixed(3)} por unidad)`
-    : 'Sin volumen';
-}
-
-/* ---------- ubicación y contadores ---------- */
 function initLoc(){
   const sel=$('loc');
-  UBICACIONES.forEach(u=>{
-    const o=document.createElement('option'); o.value=u; o.textContent=u; sel.appendChild(o);
-  });
+  UBICACIONES.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
   sel.value=localStorage.getItem(LS_LOC)||UBICACIONES[0];
   sel.onchange=()=>localStorage.setItem(LS_LOC,sel.value);
 }
 async function refreshMetrics(){
   const items=await all();
-  const objetos=items.reduce((s,i)=>s+(i.cantidad||1),0);
-  const vol=items.reduce((s,i)=>s+(i.m3||0),0);
-  $('mCount').textContent=objetos;
-  $('mVol').textContent=vol.toFixed(2);
-  const cap=parseFloat(localStorage.getItem(LS_CAP)||'0');
-  const meter=$('meter');
-  if(cap>0){
-    const pct=Math.min(100,vol/cap*100);
-    $('meterFill').style.width=pct+'%';
-    meter.classList.toggle('over',vol>cap);
-  }else{
-    $('meterFill').style.width='0%';
-  }
+  $('mCount').textContent=items.reduce((s,i)=>s+(i.cantidad||1),0);
+  const val=items.reduce((s,i)=>s+((+i.valorUSD||0)*(i.cantidad||1)),0);
+  $('mVal').textContent=Math.round(val).toLocaleString('es-MX');
   return items;
 }
 
-/* ---------- guardar ---------- */
 function toast(msg){
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(),2200);
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
 }
 
+/* ---------- guardar ---------- */
 function collect(){
   const nombre=$('nombre').value.trim();
   if(!nombre){ $('nombre').focus(); toast('Ponle nombre antes de guardar.'); return null; }
-  const q=Math.max(1,+$('cantidad').value||1);
-  const u=unitVol();
   return {
-    nombre, cantidad:q, destino,
+    nombre,
+    cantidad:Math.max(1,+$('cantidad').value||1),
+    destino,
     ubicacion:$('loc').value,
+    valorUSD:$('valor').value!==''?+$('valor').value:null,
+    precioVenta:(destino==='venta'&&$('precio').value!=='')?+$('precio').value:null,
     electrico:$('esElec').checked,
     marca:$('marca').value.trim(), modelo:$('modelo').value.trim(), serie:$('serie').value.trim(),
-    dims:{l:+$('dL').value||null,a:+$('dA').value||null,h:+$('dH').value||null},
-    m3Unidad:u||null, m3:u?+(u*q).toFixed(4):null,
     nota:$('nota').value.trim(),
-    categoria:null, valorUSD:null, precioPedido:null, precioMinimo:null,
-    bulto:null, estado:'capturado', sincronizado:false,
+    categoria:null, bulto:null, estado:'capturado', sincronizado:false,
     creado:new Date().toISOString(),
     fotos:shots.map(s=>({full:s.full,thumb:s.thumb}))
   };
 }
-
 async function persist(rec){
   try{ await put(rec); await refreshMetrics(); return true; }
   catch(err){ toast('No se pudo guardar en este dispositivo.'); return false; }
 }
-
 function resetForm(){
   shots.forEach(s=>URL.revokeObjectURL(s.url));
   shots=[]; renderShots();
-  $('nombre').value=''; $('cantidad').value=1; $('nota').value='';
-  $('esElec').checked=false; $('elecBox').classList.add('hidden');
+  $('nombre').value=''; $('cantidad').value=1; $('valor').value=''; $('precio').value=''; $('nota').value='';
+  $('tieneMarca').checked=false; $('marcaBox').classList.add('hidden');
+  $('esElec').checked=false;
   $('marca').value=$('modelo').value=$('serie').value='';
-  $('dL').value=$('dA').value=$('dH').value='';
-  $('dims').classList.add('hidden'); volPreset=null; markPreset(null); updateVol();
-  destino='pendiente';
-  [...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.d==='pendiente')));
+  destino='mudanza';
+  [...$('chips').children].forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.d==='mudanza')));
+  $('ventaBox').classList.add('hidden');
 }
 
 // Safari descarta un .click() en un input de archivo si ya se rompió la cadena
-// del gesto. Por eso: armar, limpiar y abrir la cámara de forma sincrónica,
-// y escribir en el almacén después.
+// del gesto. Por eso: armar, limpiar y abrir la cámara de forma sincrónica.
 $('save').onclick=()=>{
-  const rec=collect();
-  if(!rec) return;
-  resetForm();
-  $('file').click();
-  persist(rec);
+  const rec=collect(); if(!rec) return;
+  resetForm(); $('file').click(); persist(rec);
 };
 $('saveOnly').onclick=()=>{
-  const rec=collect();
-  if(!rec) return;
+  const rec=collect(); if(!rec) return;
   resetForm();
   persist(rec).then(ok=>{ if(ok){ toast('Guardado.'); $('nombre').focus(); } });
 };
 
 /* =========================================================
-   Inventario, respaldo y traspaso a la computadora
+   Inventario, envío y respaldo
    ========================================================= */
 $('openList').onclick=openList;
 $('closeList').onclick=()=>$('sheet').classList.add('hidden');
@@ -477,10 +378,10 @@ async function openList(){
     const groups={};
     items.forEach(i=>{(groups[i.ubicacion]=groups[i.ubicacion]||[]).push(i);});
     Object.keys(groups).sort().forEach(g=>{
-      const vol=groups[g].reduce((s,i)=>s+(i.m3||0),0);
+      const val=groups[g].reduce((s,i)=>s+((+i.valorUSD||0)*(i.cantidad||1)),0);
       const h=document.createElement('div');
       h.className='group-h';
-      h.textContent=`${g} · ${groups[g].length} fichas · ${vol.toFixed(2)} m³`;
+      h.textContent=`${g} · ${groups[g].length} fichas · ${Math.round(val).toLocaleString('es-MX')} USD`;
       body.appendChild(h);
       groups[g].slice().reverse().forEach(i=>body.appendChild(itemRow(i)));
     });
@@ -490,15 +391,12 @@ async function openList(){
   const tools=document.createElement('div');
   tools.className='tools';
   tools.appendChild(tool('Enviar a Google Sheets',
-    localStorage.getItem(LS_URL)
-      ? (pend?`${pend} fichas sin enviar.`:'Todo enviado.')
-      : 'Falta pegar la URL del Apps Script.',
+    localStorage.getItem(LS_URL) ? (pend?`${pend} fichas sin enviar.`:'Todo enviado.') : 'Falta pegar la URL del Apps Script.',
     syncSheets));
   tools.appendChild(tool('Configurar destino','URL del Apps Script y clave compartida.',setEndpoint));
-  tools.appendChild(tool('Exportar respaldo completo','JSON con fotos incluidas. Este es el archivo que abres en la computadora.',exportFull));
-  tools.appendChild(tool('Exportar tabla CSV','Solo los datos, sin fotos. Para revisar rápido en Excel.',exportCSV));
+  tools.appendChild(tool('Exportar respaldo completo','JSON con fotos incluidas. Guárdalo en tu carpeta de mudanza.',exportFull));
+  tools.appendChild(tool('Exportar tabla CSV','Solo datos, sin fotos. Para revisar rápido.',exportCSV));
   tools.appendChild(tool('Restaurar desde respaldo','Vuelca un JSON exportado antes. Se suma a lo que ya existe.',importFull));
-  tools.appendChild(tool('Fijar tope de volumen',`Cupo que autorice AAK, en m³. Ahora: ${localStorage.getItem(LS_CAP)||'sin fijar'}`,setCap));
   body.appendChild(tools);
 
   $('sheet').classList.remove('hidden');
@@ -525,15 +423,17 @@ function itemRow(i){
   st.textContent=(i.cantidad>1?i.cantidad+'× ':'')+i.nombre;
   const sm=document.createElement('small');
   const bits=[];
-  if(i.m3) bits.push(i.m3.toFixed(3)+' m³');
-  if(i.electrico&&i.serie) bits.push('serie '+i.serie);
-  else if(i.electrico) bits.push('falta serie');
-  sm.textContent=bits.join(' · ')||'sin volumen';
+  if(i.valorUSD) bits.push(i.valorUSD+' USD');
+  if(i.precioVenta) bits.push('pide '+i.precioVenta);
+  if(i.electrico&&!i.serie) bits.push('falta serie');
+  if(i.fotos&&i.fotos.length>1) bits.push(i.fotos.length+' fotos');
+  sm.textContent=bits.join(' · ')||'sin valor';
   b.appendChild(st); b.appendChild(sm); row.appendChild(b);
 
   const tag=document.createElement('span');
-  tag.className='tag'+(i.destino==='mudanza'?' move':i.destino==='venta'?' sell':'');
-  tag.textContent=i.destino==='mudanza'?'se va':i.destino==='venta'?'vender':'pendiente';
+  const cls={mudanza:'move',venta:'sell',regalo:'gift'}[i.destino]||'';
+  tag.className='tag'+(cls?' '+cls:'');
+  tag.textContent={mudanza:'se va',venta:'vender',regalo:'regalo'}[i.destino]||i.destino;
   row.appendChild(tag);
 
   const x=document.createElement('button');
@@ -543,13 +443,51 @@ function itemRow(i){
   return row;
 }
 
-function blobToB64(b){
-  return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b);});
-}
+function blobToB64(b){return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b);});}
 function download(name,blob){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download=name; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+/* ---------- sincronización ---------- */
+function setEndpoint(){
+  const u=prompt('URL del Apps Script (termina en /exec):',localStorage.getItem(LS_URL)||'');
+  if(u===null) return;
+  localStorage.setItem(LS_URL,u.trim());
+  const k=prompt('Clave compartida (la misma del script):',localStorage.getItem(LS_KEY)||'');
+  if(k!==null) localStorage.setItem(LS_KEY,k.trim());
+  openList();
+}
+
+async function syncSheets(){
+  const url=localStorage.getItem(LS_URL);
+  if(!url){ toast('Primero configura el destino.'); return; }
+  const key=localStorage.getItem(LS_KEY)||'';
+  const items=(await all()).filter(i=>!i.sincronizado);
+  if(!items.length){ toast('No hay nada pendiente.'); return; }
+
+  let ok=0, ultimoError='';
+  for(const i of items){
+    try{
+      const fotos=[];
+      for(const f of (i.fotos||[])) fotos.push({thumb:await blobToB64(f.thumb)});
+      const {fotos:_,...meta}=i;
+      // text/plain evita el preflight OPTIONS, que Apps Script no contesta.
+      const r=await fetch(url,{
+        method:'POST', mode:'cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({key,item:meta,fotos})
+      });
+      const res=await r.json();
+      if(!res||res.ok!==true) throw new Error(res&&res.error||'respuesta inesperada');
+      await put({...i,sincronizado:true});
+      ok++;
+    }catch(err){ ultimoError=String(err.message||err); }
+  }
+  // El mensaje trae el error real del script, no solo un conteo.
+  toast(ultimoError ? `${ok} enviadas. Falló: ${ultimoError}` : `${ok} fichas enviadas.`);
+  openList();
 }
 
 async function exportFull(){
@@ -559,20 +497,17 @@ async function exportFull(){
   const out=[];
   for(const i of items){
     const fotos=[];
-    for(const f of (i.fotos||[])){
-      fotos.push({full:await blobToB64(f.full),thumb:await blobToB64(f.thumb)});
-    }
+    for(const f of (i.fotos||[])) fotos.push({full:await blobToB64(f.full),thumb:await blobToB64(f.thumb)});
     out.push({...i,fotos});
   }
-  const stamp=new Date().toISOString().slice(0,10);
-  download(`inventario-mudanza-${stamp}.json`,
-    new Blob([JSON.stringify({version:1,exportado:new Date().toISOString(),items:out},null,1)],{type:'application/json'}));
+  download(`inventario-mudanza-${new Date().toISOString().slice(0,10)}.json`,
+    new Blob([JSON.stringify({version:2,exportado:new Date().toISOString(),items:out},null,1)],{type:'application/json'}));
 }
 
 async function exportCSV(){
   const items=await all();
   if(!items.length){ toast('No hay nada que exportar.'); return; }
-  const cols=['id','ubicacion','nombre','cantidad','destino','m3Unidad','m3','electrico','marca','modelo','serie','nota','creado'];
+  const cols=['id','ubicacion','nombre','cantidad','destino','valorUSD','precioVenta','electrico','marca','modelo','serie','nota','creado'];
   const esc=v=>{ v=(v==null?'':String(v)); return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const rows=[cols.join(',')].concat(items.map(i=>cols.map(c=>esc(i[c])).join(',')));
   download(`inventario-${new Date().toISOString().slice(0,10)}.csv`,
@@ -590,7 +525,10 @@ function importFull(){
       for(const i of items){
         const fotos=[];
         for(const p of (i.fotos||[])){
-          fotos.push({full:await (await fetch(p.full)).blob(),thumb:await (await fetch(p.thumb)).blob()});
+          fotos.push({
+            full:await (await fetch(p.full||p.thumb)).blob(),
+            thumb:await (await fetch(p.thumb)).blob()
+          });
         }
         const {id,...rest}=i;
         await put({...rest,fotos});
@@ -602,56 +540,6 @@ function importFull(){
   inp.click();
 }
 
-/* ---------- sincronización con Google Sheets ---------- */
-function setEndpoint(){
-  const u=prompt('URL del Apps Script (termina en /exec):',localStorage.getItem(LS_URL)||'');
-  if(u===null) return;
-  localStorage.setItem(LS_URL,u.trim());
-  const k=prompt('Clave compartida (la misma del script):',localStorage.getItem(LS_KEY)||'');
-  if(k!==null) localStorage.setItem(LS_KEY,k.trim());
-  openList();
-}
-
-async function syncSheets(){
-  const url=localStorage.getItem(LS_URL);
-  if(!url){ toast('Primero configura el destino.'); return; }
-  const key=localStorage.getItem(LS_KEY)||'';
-  const items=(await all()).filter(i=>!i.sincronizado);
-  if(!items.length){ toast('No hay nada pendiente.'); return; }
-
-  let ok=0, fail=0;
-  for(const i of items){
-    try{
-      const fotos=[];
-      for(const f of (i.fotos||[])){
-        fotos.push({thumb:await blobToB64(f.thumb),full:await blobToB64(f.full)});
-      }
-      const {fotos:_,...meta}=i;
-      // text/plain evita el preflight OPTIONS, que Apps Script no contesta.
-      const r=await fetch(url,{
-        method:'POST', mode:'cors',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({key,item:meta,fotos})
-      });
-      const res=await r.json();
-      if(!res||res.ok!==true) throw new Error(res&&res.error||'rechazado');
-      await put({...i,sincronizado:true,driveIds:res.driveIds||null});
-      ok++;
-      toast(`Enviando ${ok} de ${items.length}.`);
-    }catch(err){ fail++; }
-  }
-  toast(fail?`${ok} enviadas, ${fail} fallaron. Vuelve a intentar.`:`${ok} fichas enviadas.`);
-  openList();
-}
-
-function setCap(){
-  const v=prompt('Tope de volumen en m³ (deja vacío para quitarlo):',localStorage.getItem(LS_CAP)||'');
-  if(v===null) return;
-  if(v.trim()==='') localStorage.removeItem(LS_CAP);
-  else localStorage.setItem(LS_CAP,String(parseFloat(v)||0));
-  refreshMetrics(); openList();
-}
-
 /* ---------- arranque ---------- */
 (async()=>{
   initLoc();
@@ -659,10 +547,7 @@ function setCap(){
     db=await openDB();
     if(navigator.storage&&navigator.storage.persist) navigator.storage.persist();
     await refreshMetrics();
-  }catch(err){
-    toast('Este navegador no permitió abrir el almacén local.');
-  }
-  updateVol();
+  }catch(err){ toast('Este navegador no permitió abrir el almacén local.'); }
 })();
 </script>
 </body>
